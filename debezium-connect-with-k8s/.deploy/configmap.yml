@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: debezium-kafka-connect-config
+  namespace: test
+  labels:
+    app: debezium-kafka-connect
+data:
+  BOOTSTRAP_SERVERS: "127.0.0.1:9092"
+  CONFIG_STORAGE_TOPIC: "debezium_connect_configs"
+  OFFSET_STORAGE_TOPIC: "debezium_connect_offsets"
+  STATUS_STORAGE_TOPIC: "debezium_connect_statuses"

@@ -1,0 +1,68 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: debezium-kafka-connect-deployment
+  namespace: test
+spec:
+  replicas: ${REPLICA}
+  revisionHistoryLimit: 2
+  selector:
+    matchLabels:
+      app: debezium-kafka-connect
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  template:
+    metadata:
+      labels:
+        app: debezium-kafka-connect
+        version: "${VERSION}"
+        cluster: ${K8S_CLUSTER}
+    spec:
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 120
+      imagePullSecrets:
+        - name: registry-secret
+      containers:
+        - name: debezium-kafka-connect
+          image: debezium/connect:1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8083
+              protocol: TCP
+          env:
+            - name: SERVER_PORT
+              value: "8083"
+            - name: VERSION
+              value: "${VERSION}"
+          envFrom:
+            - configMapRef:
+                name: debezium-kafka-connect-config
+          livenessProbe:
+            exec:
+              command:
+              - sh
+              - -ec
+              - ipaddress=$(ip addr | grep 'state UP' -A2 | tail -n1 | awk '{print $2}' | cut -f1  -d'/'); reply=$(curl -s ${DL}ipaddress:8083/connectors/debezium-test-connector/tasks/0/status | grep -o FAILED | wc -l); if [ ${DL}reply -gt 0 ]; then exit 1; fi;
+            initialDelaySeconds: 30
+            periodSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /
+              port: http
+              scheme: HTTP
+            initialDelaySeconds: 60
+            timeoutSeconds: 30
+            periodSeconds: 20
+            successThreshold: 1
+            failureThreshold: 5
+          resources:
+            requests:
+              memory: 1Gi
+              cpu: 100m
+            limits:
+              memory: 2Gi
+              cpu: 2

@@ -1,0 +1,60 @@
+variables:
+  # CI_DEBUG_TRACE: "true"
+  VERSION: $CI_COMMIT_SHORT_SHA
+  DOCKER_IMAGE: $REGISTRY_HOST/$CI_PROJECT_PATH:$CI_COMMIT_SHORT_SHA
+  CI_PATH: /root/.m2/$CI_COMMIT_SHORT_SHA/
+
+.only: &only
+  only:
+    - master
+    - /^hotfix.*$/
+
+.only_except_skip_ci: &only_except_skip_ci
+  <<: *only
+  except:
+    variables:
+      - $CI_COMMIT_MESSAGE =~ /skip-ci/i
+
+.only_except_skip_ci_test: &only_except_skip_ci_test
+  <<: *only
+  except:
+    variables:
+      - $CI_COMMIT_MESSAGE =~ /skip-ci/i
+      - $CI_COMMIT_MESSAGE =~ /skip-test/i
+
+.only_except_skip_ci_manual: &only_except_skip_ci_manual
+  <<: *only_except_skip_ci
+  when: manual
+  allow_failure: false
+
+.only_except_skip_ci_manual_allow_failure: &only_except_skip_ci_manual_allow_failure
+  <<: *only_except_skip_ci
+  when: manual
+
+stages:
+  - Deploy Configmap
+  - Deploy
+
+Deploy Configmap:
+  stage: Deploy Configmap
+  when: manual
+  image: nexusrepository.abc.com/runners/kubectl:v1.14.3
+  environment:
+    name: qa
+  tags:
+    - qa
+  script:
+    - kubectl apply --record=true -f .deploy/configmap.yml
+
+Deploy:
+  stage: Deploy QA
+  <<: *only_except_skip_ci_manual
+  image: nexusrepository.abc.com/runners/kubectl:v1.14.3
+  environment:
+    name: qa
+    url:
+  tags:
+    - qa
+  script:
+    - K8S_CLUSTER=qa REPLICA=1 DL=$ envsubst < .deploy/deployment.yml | kubectl apply --record=true -f -
+    - envsubst < .deploy/service.yml | kubectl apply --record=true -f -
