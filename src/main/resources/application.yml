@@ -1,0 +1,40 @@
+spring:
+  application:
+    name: Debezium Demo
+  profiles:
+    active: local
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/debezium
+    type: com.zaxxer.hikari.HikariDataSource
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      pool-name: debezium-psql-pool
+      maximum-pool-size: 20
+      data-source-properties:
+        cachePrepStmts: true
+        prepStmtCacheSize: 250
+        prepStmtCacheSqlLimitx: 2048
+        useServerPrepStmts: true
+      username: user
+      password: password
+
+  jpa:
+    database: POSTGRESQL
+    database-platform: org.hibernate.dialect.PostgreSQL95Dialect
+    open-in-view: false
+    show-sql: true
+    hibernate:
+      ddl-auto: create-drop
+      use-new-id-generator-mappings: true
+    properties:
+      hibernate:
+        temp:
+          use_jdbc_metadata_defaults: false
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.xml
+
+swagger:
+  host:
+    url: localhost:8080
+    path:

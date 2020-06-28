@@ -12,10 +12,9 @@ PostgreSQL;
 
 ```sql
 create sequence seq_persons start 1 increment 1;
-create table "persons" (id int8 not null, email varchar(255) not null, firstname varchar(255) not null, lastname varchar(255) not null, primary key (id));
-alter table if exists "persons" add constraint UK_1x5aosta48fbss4d5b3kuu0rd unique (email);
+create table "persons" (id int8 not null, firstname varchar(255) not null, lastname varchar(255) not null, primary key (id));
 ALTER TABLE persons REPLICA IDENTITY FULL;
-INSERT INTO persons (id, firstname, lastname, email) VALUES (1,'Ali','Veli','ali.veli@mail.com');
+INSERT INTO persons (id, firstname, lastname) VALUES (1,'Abdullah','Yıldırım');
 ```
 
 
